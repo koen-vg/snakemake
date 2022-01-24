@@ -78,6 +78,9 @@ class PathModifier:
         if os.path.isabs(path) or path.startswith(".."):
             # do not apply prefix if path is not within the workdir
             return path
+        # Dirty dirty hack to fix case of path being a remote URL.
+        if "." in path.split("/")[0]:
+            return path
         return self.prefix + path
 
     def apply_default_remote(self, path):
