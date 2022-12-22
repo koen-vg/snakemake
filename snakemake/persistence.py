@@ -469,6 +469,10 @@ class Persistence:
         ) as tmpfile:
             json.dump(json_value, tmpfile)
         os.replace(tmpfile.name, recpath)
+        # Set the permissions of this file to the current umask.
+        umask = os.umask(0)
+        os.umask(umask)
+        os.chmod(recpath, umask)
 
     def _delete_record(self, subject, id):
         try:
