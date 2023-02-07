@@ -20,7 +20,6 @@ from snakemake.common import Mode
 
 
 class ColorizingStreamHandler(_logging.StreamHandler):
-
     BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
     RESET_SEQ = "\033[0m"
     COLOR_SEQ = "\033[%dm"
@@ -247,7 +246,6 @@ class WMSLogger:
         """
         result = {}
         for key, value in msg.items():
-
             # For a job, the name is sufficient
             if key == "job":
                 result[key] = str(value)
@@ -474,9 +472,13 @@ class Logger:
                 except FileNotFoundError:
                     yield f"Logfile {f} not found."
                     return
-                logfile_header = f"Logfile {f}:"
-                yield logfile_header
                 lines = content.splitlines()
+                logfile_header = f"Logfile {f}:"
+                if not lines:
+                    logfile_header += " empty file"
+                    yield logfile_header
+                    return
+                yield logfile_header
                 max_len = max(max(len(l) for l in lines), len(logfile_header))
                 yield "=" * max_len
                 yield from lines

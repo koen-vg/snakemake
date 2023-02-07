@@ -674,7 +674,7 @@ class CPUExecutor(RealExecutor):
             error_callback(job)
         except (Exception, BaseException) as ex:
             self.print_job_error(job)
-            if not (job.is_group() or job.shellcmd) or self.workflow.verbose:
+            if self.workflow.verbose or (job.is_run and not job.is_group()):
                 print_exception(ex, self.workflow.linemaps)
             error_callback(job)
 
@@ -995,7 +995,6 @@ class GenericClusterExecutor(ClusterExecutor):
         max_status_checks_per_second=1,
         keepincomplete=False,
     ):
-
         self.submitcmd = submitcmd
         if not assume_shared_fs and statuscmd is None:
             raise WorkflowError(
@@ -2152,7 +2151,7 @@ class TibannaExecutor(ClusterExecutor):
         self.workflow_sources = []
         for wfs in dag.get_sources():
             if os.path.isdir(wfs):
-                for (dirpath, dirnames, filenames) in os.walk(wfs):
+                for dirpath, dirnames, filenames in os.walk(wfs):
                     self.workflow_sources.extend(
                         [os.path.join(dirpath, f) for f in filenames]
                     )

@@ -3,44 +3,42 @@ __copyright__ = "Copyright 2022, Johannes Köster"
 __email__ = "johannes.koester@uni-due.de"
 __license__ = "MIT"
 
-from abc import abstractmethod
-import enum
-import os
-import sys
 import base64
-import tempfile
-import json
-import shutil
 import copy
-
+import enum
+import json
+import os
+import shutil
+import sys
+import tempfile
+from abc import abstractmethod
 from collections import defaultdict
 from itertools import chain, filterfalse
 from operator import attrgetter
 from typing import Optional
 
+from snakemake.common import (
+    DYNAMIC_FILL,
+    TBDString,
+    get_uuid,
+    is_local_file,
+    lazy_property,
+    parse_uri,
+)
+from snakemake.exceptions import ProtectedOutputException, RuleException, WorkflowError
 from snakemake.io import (
     IOFile,
-    Wildcards,
     Resources,
+    Wildcards,
     _IOFile,
-    is_flagged,
     get_flag_value,
+    is_flagged,
     wait_for_files,
 )
+from snakemake.logging import logger
 from snakemake.resources import GroupResources
 from snakemake.target_jobs import TargetSpec
 from snakemake.utils import format, listfiles
-from snakemake.exceptions import RuleException, ProtectedOutputException, WorkflowError
-
-from snakemake.logging import logger
-from snakemake.common import (
-    DYNAMIC_FILL,
-    is_local_file,
-    parse_uri,
-    lazy_property,
-    get_uuid,
-    TBDString,
-)
 
 
 def format_files(job, io, dynamicio):
@@ -865,7 +863,7 @@ class Job(AbstractJob):
             or self.rule.shadow_depth == "copy-minimal"
         ):
             # Re-create the directory structure in the shadow directory
-            for (f, d) in set(
+            for f, d in set(
                 [
                     (item, os.path.dirname(item))
                     for sublist in [self.input, self.output, self.log]
@@ -1226,7 +1224,6 @@ class GroupJobFactory:
 
 
 class GroupJob(AbstractJob):
-
     obj_cache = dict()
 
     __slots__ = [
@@ -1272,7 +1269,6 @@ class GroupJob(AbstractJob):
 
     def finalize(self):
         if self.toposorted is None:
-
             self.toposorted = [
                 *self.dag.toposorted(self.jobs, inherit_pipe_dependencies=True)
             ]
@@ -1463,8 +1459,12 @@ class GroupJob(AbstractJob):
     def postprocess(self, error=False, **kwargs):
         # Iterate over jobs in toposorted order (see self.__iter__) to
         # ensure that outputs are touched in correct order.
-        for job in self:
-            job.postprocess(error=error, **kwargs)
+        for level in self.toposorted:
+            for job in level:
+                # postprocessing involves touching output files (to ensure that
+                # modification times are always correct. This has to happen in
+                # topological order, such that they are not mixed up.
+                job.postprocess(error=error, **kwargs)
         # remove all pipe and service outputs since all jobs of this group are done and the
         # outputs are no longer needed
         for job in self.jobs:
@@ -1562,6 +1562,8 @@ class GroupJob(AbstractJob):
     def attempt(self, attempt):
         # reset resources
         self._resources = None
+        for job in self.jobs:
+            job.attempt = attempt
         self._attempt = attempt
 
     @property
@@ -1602,7 +1604,6 @@ class GroupJob(AbstractJob):
 
 
 class Reason:
-
     __slots__ = [
         "_updated_input",
         "_updated_input_run",

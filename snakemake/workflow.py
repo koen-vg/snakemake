@@ -1304,7 +1304,6 @@ class Workflow:
                 update_config(self.config, self.overwrite_config)
 
     def set_pepfile(self, path):
-
         try:
             import peppy
         except ImportError:
@@ -1479,7 +1478,9 @@ class Workflow:
                     raise RuleException(
                         "Retries values have to be integers >= 0", rule=rule
                     )
-            rule.restart_times = ruleinfo.retries or self.restart_times
+            rule.restart_times = (
+                self.restart_times if ruleinfo.retries is None else ruleinfo.retries
+            )
 
             if ruleinfo.version:
                 rule.version = ruleinfo.version

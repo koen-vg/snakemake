@@ -138,6 +138,7 @@ def print_exception(ex, linemaps):
                 linemaps=linemaps,
                 snakefile=ex.snakefile,
                 show_traceback=True,
+                rule=ex.rule,
             )
         )
     elif isinstance(ex, KeyboardInterrupt):
@@ -569,3 +570,9 @@ class ResourceScopesException(Exception):
         super().__init__(msg, invalid_resources)
         self.msg = msg
         self.invalid_resources = invalid_resources
+
+
+class CliException(Exception):
+    def __init__(self, msg):
+        super().__init__(msg)
+        self.msg = msg
