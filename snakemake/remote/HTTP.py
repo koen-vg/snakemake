@@ -197,6 +197,11 @@ class RemoteObject(DomainObject):
             )
 
     def size(self):
+        # First see if we already have the file locally.
+        local_size = self._iofile.size_local
+        if local_size > 0:
+            return local_size
+        # If not, check with a HEAD request.
         if self.exists():
             with self.httpr(verb="HEAD") as httpr:
                 content_size = int(
