@@ -501,7 +501,7 @@ class _IOFile(str):
         for remote files it will additionally query the remote
         location.
         """
-        mtime_remote = self.remote_object.mtime() if self.is_remote else None
+        mtime_remote = self.remote_object.mtime() if self.is_remote and not self.is_ancient else None
 
         # We first do a normal stat.
         try:
