@@ -473,6 +473,8 @@ class _IOFile(str):
     def exists_remote(self):
         if not self.is_remote:
             return False
+        if self.is_ancient:
+            return True
         return self.remote_object.exists()
 
     @property
