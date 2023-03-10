@@ -39,6 +39,18 @@ from snakemake.logging import logger
 from snakemake.resources import GroupResources
 from snakemake.target_jobs import TargetSpec
 from snakemake.utils import format, listfiles
+from snakemake.exceptions import RuleException, ProtectedOutputException, WorkflowError
+
+from snakemake.logging import logger
+from snakemake.common import (
+    DYNAMIC_FILL,
+    is_local_file,
+    parse_uri,
+    lazy_property,
+    get_uuid,
+    TBDString,
+    IO_PROP_LIMIT,
+)
 
 
 def format_files(job, io, dynamicio):
@@ -997,8 +1009,8 @@ class Job(AbstractJob):
             "type": "single",
             "rule": self.rule.name,
             "local": self.is_local,
-            "input": self.input,
-            "output": self.output,
+            "input": None if len(self.input) > IO_PROP_LIMIT else self.input,
+            "output": None if len(self.output) > IO_PROP_LIMIT else self.output,
             "wildcards": self.wildcards_dict,
             "params": params,
             "log": self.log,
@@ -1430,8 +1442,8 @@ class GroupJob(AbstractJob):
             "type": "group",
             "groupid": self.groupid,
             "local": self.is_local,
-            "input": self.input,
-            "output": self.output,
+            "input": None if len(self.input) > IO_PROP_LIMIT else self.input,
+            "output": None if len(self.output) > IO_PROP_LIMIT else self.output,
             "threads": self.threads,
             "resources": resources,
             "jobid": self.jobid,
